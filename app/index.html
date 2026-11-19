@@ -1,201 +1,166 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" href="data:,">
-<title>Solmar Bay Cover Studio — GTA 6-style cover art maker</title>
+<title>Solmar Bay Cover Studio — GTA-style cover art maker</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="topbar">
   <div class="brand">
-    <div class="logo">SOLMAR BAY</div>
-    <div class="sub">Cover Studio &middot; Solmar Bay &mdash; Neon Tide</div>
+    <span class="brand-mark">SB</span>
+    <div>
+      <h1>Solmar Bay <span>Cover Studio</span></h1>
+      <p>Turn any photo into GTA-style cover art — offline, on your machine.</p>
+    </div>
   </div>
-  <div class="offline-note">OFFLINE &middot; Your photos never leave this machine</div>
+  <ol class="steps">
+    <li><b>1</b> Photos</li>
+    <li><b>2</b> Layout</li>
+    <li><b>3</b> Export</li>
+  </ol>
+  <div class="score" title="Live cover score">
+    <div class="score-head"><span>COVER SCORE</span><strong id="scoreValue">–</strong></div>
+    <div class="score-track"><div id="scoreBar"></div></div>
+    <small id="scoreTip">Next: —</small>
+  </div>
   <div class="top-actions">
-    <button id="surpriseBtn" class="surprise" title="Randomise layout, grade, treatment and caption into a finished cover">&#9733; SURPRISE ME</button>
-    <button id="undoBtn" title="Undo (Ctrl+Z)">Undo</button>
-    <button id="redoBtn" title="Redo (Ctrl+Y)">Redo</button>
-    <button id="coverViewBtn" title="Hide the panels and show the cover big">Cover view</button>
+    <button id="undoBtn" class="btn ghost" title="Undo (Ctrl+Z)">↩ Undo</button>
+    <button id="redoBtn" class="btn ghost" title="Redo (Ctrl+Y)">↪ Redo</button>
+    <button id="surpriseBtn" class="btn surprise">✦ SURPRISE ME</button>
   </div>
+  <p class="offline">Photos never leave your machine · 100% offline</p>
 </header>
 
-<nav class="steps" aria-label="Steps">
-  <span class="step"><b>1</b> Photos</span><span class="step-arrow">&rsaquo;</span>
-  <span class="step"><b>2</b> Layout</span><span class="step-arrow">&rsaquo;</span>
-  <span class="step"><b>3</b> Export</span>
-  <span class="steps-note">Pick photos, pick a layout, export a PNG &mdash; three sizes, one click.</span>
-</nav>
-
-<main class="editor">
-  <aside class="col left">
-    <section class="panel-box">
-      <h2><span class="num">1</span> Photos</h2>
+<main class="layout">
+  <aside class="rail left">
+    <section class="card">
+      <h2><span class="step-num">1</span> Photos</h2>
+      <div id="photoGrid" class="thumbs"></div>
+      <p class="hint">Click a photo to put it in the selected panel. Double-click to fill every panel.</p>
       <div class="row">
-        <label class="btn upload-label">+ Add your photos
-          <input id="uploadInput" type="file" accept="image/*" multiple hidden>
-        </label>
-        <button id="loadSamplesBtn" class="btn ghost">Load samples</button>
+        <button id="uploadBtn" class="btn">＋ Add your photos</button>
+        <button id="fillAllBtn" class="btn ghost">Fill all panels</button>
       </div>
-      <div id="photoGrid" class="photo-grid"></div>
-      <label class="field-label" for="presetSelect">Sample preset</label>
-      <div class="row">
-        <select id="presetSelect"></select>
-        <button id="applyPresetBtn" class="btn">Fill panels</button>
-      </div>
-      <button id="fillOneBtn" class="btn wide">Fill all panels with one photo</button>
-      <p class="hint">Sample photos are free to use. Your own photos are read on this machine only &mdash; never uploaded.</p>
+      <input id="uploadInput" type="file" accept="image/*" multiple hidden>
     </section>
-
-    <section class="panel-box">
-      <h2>Selected panel</h2>
-      <div id="panelTitle" class="panel-title">Panel 1 of 6</div>
-      <label class="field-label" for="panelPhotoSelect">Photo in this panel</label>
-      <select id="panelPhotoSelect"></select>
-      <div class="row">
-        <button id="useAllBtn" class="btn ghost">Use in all panels</button>
-        <button id="flipBtn" class="btn ghost">Flip</button>
-        <button id="resetCropBtn" class="btn ghost">Reset crop</button>
-      </div>
-      <label class="field-label" for="zoomRange">Zoom <span id="zoomVal">100%</span></label>
-      <input id="zoomRange" type="range" min="100" max="400" value="100">
-      <label class="field-label" for="panelGradeSelect">Grade for this panel</label>
-      <select id="panelGradeSelect"></select>
-      <p class="hint">Click a panel in the preview to select it. Drag to move, scroll to zoom.</p>
+    <section class="card">
+      <h2><span class="step-num">2</span> Layout</h2>
+      <div id="layoutGrid" class="pills"></div>
     </section>
-
-    <section class="panel-box">
-      <h2>Cover score</h2>
-      <div class="score-row"><div class="score-bar"><div id="scoreFill" class="score-fill"></div></div><span id="scoreNum">0</span></div>
-      <p id="scoreTip" class="hint">Add photos to every panel to start.</p>
+    <section class="card">
+      <h2>Caption packs</h2>
+      <div id="packGrid" class="pills"></div>
+      <p class="hint">One click fills the whole caption from the Solmar Bay story — Vince, Rosa &amp; Captain Sloane.</p>
     </section>
   </aside>
 
-  <section class="col center">
-    <div class="preview-wrap">
-      <canvas id="preview"></canvas>
-      <div class="preview-hint">Click a panel to select &middot; Drag to move &middot; Scroll to zoom</div>
-      <button id="compareBtn" class="compare" title="Press and hold to see the original photos without grade or treatment">Hold to compare</button>
+  <section class="stage">
+    <div class="stage-bar">
+      <span id="panelLabel">Panel 1 of 6</span>
+      <span class="stage-hint">Click a panel to select · Drag to move · Scroll to zoom</span>
+      <button id="compareBtn" class="btn ghost" title="Hold to see the photos before the grade">Hold to compare</button>
+      <button id="coverViewBtn" class="btn ghost">Cover view</button>
     </div>
-    <div class="series-box panel-box">
-      <h2>Cover series</h2>
-      <div class="series-row">
-        <div class="series-item"><canvas id="seriesTeaser" width="180" height="120"></canvas><span>Teaser &middot; Polaroids</span></div>
-        <div class="series-item"><canvas id="seriesMain" width="180" height="120"></canvas><span>Main &middot; Mosaic 6</span></div>
-        <div class="series-item"><canvas id="seriesFinale" width="180" height="120"></canvas><span>Finale &middot; Wanted</span></div>
+    <div class="preview-wrap">
+      <canvas id="previewCanvas" width="960" height="540"></canvas>
+    </div>
+    <div class="panel-tools">
+      <label>Photo <select id="panelPhoto"></select></label>
+      <label>Grade <select id="panelGrade"></select></label>
+      <label>Zoom <input id="panelZoom" type="range" min="50" max="300" value="100"> <span id="panelZoomVal">100%</span></label>
+      <button id="panelFlip" class="btn ghost">Flip</button>
+      <button id="panelReset" class="btn ghost">Reset crop</button>
+    </div>
+    <div id="coverView" class="cover-view" hidden>
+      <div class="cover-view-head">
+        <span id="coverViewLabel">Exported cover</span>
+        <button id="backToEditorBtn" class="btn ghost">← Back to editor</button>
       </div>
-      <button id="exportSeriesBtn" class="btn wide accent">Export the series &mdash; 3 covers, one click</button>
+      <canvas id="coverViewCanvas" width="960" height="540"></canvas>
     </div>
   </section>
 
-  <aside class="col right">
-    <section class="panel-box">
-      <h2><span class="num">2</span> Layout</h2>
-      <div id="layoutGrid" class="layout-grid"></div>
-    </section>
-
-    <section class="panel-box">
+  <aside class="rail right">
+    <section class="card">
       <h2>Colour grade</h2>
-      <div id="gradeGrid" class="grade-grid"></div>
-      <label class="field-label" for="gradeStrength">Strength <span id="gradeStrengthVal">80%</span></label>
-      <input id="gradeStrength" type="range" min="0" max="100" value="80">
-      <label class="field-label" for="contrastRange">Contrast <span id="contrastVal">1.08</span></label>
-      <input id="contrastRange" type="range" min="70" max="140" value="108">
-    </section>
-
-    <section class="panel-box">
-      <h2>Treatment</h2>
-      <label class="field-label" for="posterInk">Poster ink <span id="posterInkVal">65%</span></label>
-      <input id="posterInk" type="range" min="0" max="100" value="65">
-      <label class="field-label" for="colorPopSelect">Colour pop</label>
-      <div class="row">
-        <select id="colorPopSelect">
+      <div id="gradeGrid" class="pills"></div>
+      <label class="slider">Strength <input id="strengthRange" type="range" min="0" max="100" value="80"> <span id="strengthVal">80%</span></label>
+      <label class="slider">Contrast <input id="contrastRange" type="range" min="-50" max="50" value="10"> <span id="contrastVal">+10</span></label>
+      <label class="slider">Poster Ink <input id="inkRange" type="range" min="0" max="100" value="60"> <span id="inkVal">60%</span></label>
+      <label class="slider">Colour Pop
+        <select id="popSelect">
           <option value="none">Off</option>
-          <option value="pink">Neon pink</option>
-          <option value="cyan">Neon cyan</option>
+          <option value="pink">Pink</option>
+          <option value="cyan">Cyan</option>
           <option value="gold">Gold</option>
         </select>
-        <input id="popStrength" type="range" min="0" max="100" value="80" title="Colour pop strength">
-      </div>
+        <input id="popRange" type="range" min="0" max="100" value="60"> <span id="popVal">60%</span>
+      </label>
       <div class="toggles">
-        <label><input id="grainToggle" type="checkbox" checked> Grain</label>
-        <label><input id="halftoneToggle" type="checkbox" checked> Halftone</label>
-        <label><input id="glowToggle" type="checkbox" checked> Glow</label>
+        <label><input id="grainToggle" type="checkbox" checked> Film grain</label>
+        <label><input id="halftoneToggle" type="checkbox" checked> Halftone dots</label>
+        <label><input id="glowToggle" type="checkbox" checked> Neon glow</label>
+        <label><input id="vignetteToggle" type="checkbox" checked> Vignette</label>
       </div>
     </section>
-
-    <section class="panel-box">
-      <h2>Sunset backdrop</h2>
-      <p class="hint">A sunset drawn by the app itself &mdash; gradient sky, sliced sun, palm silhouettes and a synthwave grid. No photo needed.</p>
-      <div class="row">
-        <select id="sunsetPlacement">
-          <option value="band">Behind the title</option>
-          <option value="full">Full background</option>
-          <option value="off">Off</option>
-        </select>
+    <section class="card">
+      <h2>Vice Sunset layer</h2>
+      <label class="row"><input id="sunsetToggle" type="checkbox" checked> Drawn sunset backdrop</label>
+      <label>Style
         <select id="sunsetStyle">
-          <option value="vice">Vice Sunset</option>
-          <option value="neon">Neon Night</option>
-          <option value="synth">Synthwave Grid</option>
+          <option value="grid">Synthwave grid</option>
+          <option value="palms">Palms &amp; sun</option>
+          <option value="skyline">Skyline &amp; sun</option>
         </select>
-      </div>
+      </label>
+      <p class="hint">Drawn by the app — gradient sky, sliced sun, grid, palms and skyline. No stock art.</p>
     </section>
-
-    <section class="panel-box">
-      <h2><span class="num">3</span> Caption</h2>
-      <div class="pack-row" id="packRow"></div>
-      <label class="field-label" for="kickerInput">Kicker</label>
-      <input id="kickerInput" type="text" value="&#9733; SOLMAR BAY &#9733;">
-      <label class="field-label" for="titleInput">Title</label>
-      <input id="titleInput" type="text" value="NEON TIDE">
-      <label class="field-label" for="subtitleInput">Sub-line (script)</label>
-      <input id="subtitleInput" type="text" value="One last score">
-      <label class="field-label" for="taglineInput">Tagline</label>
-      <input id="taglineInput" type="text" value="ONE LAST RIDE DOWN THE BAY">
-      <label class="field-label">Caption style</label>
-      <div id="captionStyleRow" class="pill-row"></div>
-      <label class="field-label" for="titleSizeRange">Title size <span id="titleSizeVal">100%</span></label>
-      <input id="titleSizeRange" type="range" min="70" max="140" value="100">
-      <label class="field-label">Title position</label>
-      <div class="pill-row" id="titlePosRow">
-        <button class="pill on" data-pos="across">Across the art</button>
-        <button class="pill" data-pos="band">Bottom band</button>
-      </div>
+    <section class="card">
+      <h2>Caption</h2>
+      <label>Kicker <input id="kickerInput" type="text" value="★ SOLMAR BAY ★"></label>
+      <label>Title <input id="titleInput" type="text" value="NEON TIDE"></label>
+      <label>Script subtitle <input id="scriptInput" type="text" value="One last score"></label>
+      <label>Tagline <input id="taglineInput" type="text" value="VINCE · ROSA · EVERY STREET IS A STAGE"></label>
+      <div id="styleGrid" class="pills"></div>
+      <label class="slider">Title size <input id="titleSizeRange" type="range" min="60" max="140" value="100"> <span id="titleSizeVal">100%</span></label>
+      <label>Title position
+        <select id="titlePosSelect">
+          <option value="band">Bottom band</option>
+          <option value="across">Across the art</option>
+        </select>
+      </label>
     </section>
-
-    <section class="panel-box">
+    <section class="card">
       <h2>Badges</h2>
       <div class="toggles">
-        <label><input id="badgeEst" type="checkbox" checked> EST. 2026 starburst</label>
-        <label><input id="badgeNew" type="checkbox" checked> NEW badge</label>
-        <label><input id="badgeBarcode" type="checkbox" checked> Barcode</label>
-        <label><input id="badgeSkyline" type="checkbox" checked> Skyline strip</label>
-        <label><input id="badgeRibbon" type="checkbox" checked> ORIGINAL &middot; FAN MADE ribbon</label>
+        <label><input id="estToggle" type="checkbox" checked> EST. 2026 starburst</label>
+        <label><input id="barcodeToggle" type="checkbox" checked> Barcode</label>
+        <label><input id="ribbonToggle" type="checkbox" checked> ORIGINAL · FAN MADE ribbon</label>
+        <label><input id="skylineToggle" type="checkbox" checked> Skyline strip</label>
       </div>
-      <label class="field-label" for="heatRange">Heat rating <span id="heatVal">&#9733;&#9733;&#9733;&#9733;&#9733;</span></label>
-      <input id="heatRange" type="range" min="1" max="5" value="5">
+      <label>HEAT
+        <select id="heatSelect">
+          <option value="5">★★★★★</option>
+          <option value="4">★★★★☆</option>
+          <option value="3">★★★☆☆</option>
+        </select>
+      </label>
     </section>
-
-    <section class="panel-box">
-      <h2>Export</h2>
-      <label class="field-label">Poster size</label>
-      <div class="pill-row" id="sizeRow">
-        <button class="pill" data-size="1080x1080">1080 &times; 1080</button>
-        <button class="pill" data-size="1080x1350">1080 &times; 1350</button>
-        <button class="pill on" data-size="1920x1080">1920 &times; 1080</button>
-      </div>
-      <button id="exportBtn" class="btn wide accent big">Export PNG</button>
-      <button id="exportAllBtn" class="btn wide">Export all 3 sizes</button>
-      <p class="hint">Exports are real PNGs at the exact post size. No watermark, no upload.</p>
+    <section class="card export">
+      <h2><span class="step-num">3</span> Export</h2>
+      <div id="sizeGrid" class="pills"></div>
+      <button id="exportBtn" class="btn big">Export PNG</button>
+      <button id="exportAllBtn" class="btn">Export all 3 sizes</button>
+      <button id="seriesBtn" class="btn">Export series — Teaser / Main / Finale</button>
+      <p class="hint">Exports at full size: 1080 × 1080, 1080 × 1350 or 1920 × 1080 PNG.</p>
     </section>
   </aside>
 </main>
 
-<footer class="foot">
-  <span>Display type: Anton &middot; Script: Pacifico &middot; Condensed: Oswald &mdash; all SIL Open Font License, shipped with the app.</span>
-  <span>Original fan-made art for Solmar Bay &mdash; Neon Tide. Not affiliated with Rockstar Games.</span>
+<footer>
+  <p>Fonts: Anton, Pacifico &amp; Oswald — SIL Open Font License, shipped under app/fonts. Original fan-made art: no Rockstar logo, artwork or fonts.</p>
 </footer>
 
 <script type="module" src="src/app.js"></script>

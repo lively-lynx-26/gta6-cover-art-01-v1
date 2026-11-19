@@ -1,43 +1,37 @@
-// main.ts — entry program for gta6-cover-art-01 ("Solmar Bay Cover Studio").
-// Copies app/ and screenshots/ into the output directory (default absolute
-// /output, MAKEFUN_OUTPUT_DIR as the fallback) and writes /output/dossier.json
-// with buildDossier from the kit's vendor/makefun-app.ts. Standard library
-// only. The program runs twice and its output is byte-identical.
-//
-// The output directory is never deleted or recreated: in the grader /output
-// is a bind mount, and removing it breaks the run. Directories inside it are
-// created as needed and files are copied over them; stale files from an
-// earlier run are left alone.
-
-import { buildDossier } from './vendor/makefun-app.ts';
-import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+// Solmar Bay Cover Studio — entry program.
+// Copies app/ and screenshots/ into the output dir and writes dossier.json
+// with the kit's buildDossier. Never deletes the output dir itself.
+// Runs on Node 22, standard library only, no network.
+import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { join } from 'node:path';
+import { buildDossier } from './vendor/makefun-app.ts';
 
-// The repository root: this file's own directory, never process.cwd() (the
-// grader runs from /). new URL('.', import.meta.url) is already the directory
-// holding this file; do not dirname() it again.
-const repoDir = fileURLToPath(new URL('.', import.meta.url));
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)));
+const outDir = resolve(process.env.MAKEFUN_OUTPUT_DIR || '/output');
 
-const outDir = process.env.MAKEFUN_OUTPUT_DIR || '/output';
-
-// Copy app/ and screenshots/ into the output directory. cpSync copies
-// recursively and overwrites; the output directory itself is only created,
-// never removed.
-mkdirSync(outDir, { recursive: true });
-cpSync(join(repoDir, 'app'), join(outDir, 'app'), { recursive: true });
-if (existsSync(join(repoDir, 'screenshots'))) {
-  cpSync(join(repoDir, 'screenshots'), join(outDir, 'screenshots'), { recursive: true });
+function copyTree(srcDir, destDir) {
+  if (existsSync(destDir)) rmSync(destDir, { recursive: true, force: true });
+  mkdirSync(destDir, { recursive: true });
+  const entries = readdirSync(srcDir).sort();
+  for (const name of entries) {
+    const src = join(srcDir, name);
+    const dest = join(destDir, name);
+    if (statSync(src).isDirectory()) copyTree(src, dest);
+    else copyFileSync(src, dest);
+  }
 }
 
-writeFileSync(
-  join(outDir, 'dossier.json'),
-  buildDossier(outDir, {
-    text_max_bytes: 163840,
-    screenshots: { max: 4, max_bytes: 262144 },
-    app_max_files: 993,
-    app_max_bytes: 50331648,
-  }),
-);
+mkdirSync(outDir, { recursive: true });
+copyTree(join(repoRoot, 'app'), join(outDir, 'app'));
+copyTree(join(repoRoot, 'screenshots'), join(outDir, 'screenshots'));
 
-console.log(`dossier written to ${join(outDir, 'dossier.json')}`);
+const dossier = buildDossier(outDir, {
+  text_max_bytes: 163840,
+  screenshots: { max: 4, max_bytes: 262144 },
+  app_max_files: 993,
+  app_max_bytes: 50331648,
+  app_path_max_bytes: 1000,
+});
+writeFileSync(join(outDir, 'dossier.json'), dossier);
+console.log('wrote', join(outDir, 'dossier.json'), dossier.length, 'bytes');
